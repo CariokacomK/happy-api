@@ -1,0 +1,1 @@
+{"version":3,"file":"CredenciadoraCartao.d.ts","sourceRoot":"","sources":["../../../src/models/nfe/CredenciadoraCartao.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,mBAAmB;IAChC,uBAAuB,EAAE,MAAM,CAAC;IAChC,uBAAuB,EAAE,MAAM,CAAC;IAChC,QAAQ,EAAE,MAAM,CAAC;IACjB,WAAW,EAAE,MAAM,CAAC;CACvB"}

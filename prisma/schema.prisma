@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model dim_destinatario {
+  id_destinatario    Int                @id @default(autoincrement())
+  id_doc_fiscal      String             @db.VarChar(20)
+  nome_razao         String             @db.VarChar(150)
+  uf                 String?            @db.Char(2)
+  municipio          String?            @db.VarChar(100)
+  cep                String?            @db.VarChar(9)
+  dt_inicio_vigencia DateTime           @default(dbgenerated("(utc_timestamp())")) @db.DateTime(0)
+  dt_fim_vigencia    DateTime?          @db.DateTime(0)
+  fl_atual           Boolean?
+  fato_nf            fato_nf[]
+  fato_processo_nf   fato_processo_nf[]
+
+  @@index([id_doc_fiscal, fl_atual, dt_inicio_vigencia], map: "IX_DEST_DOC_ATU")
+  @@index([uf, municipio, fl_atual, dt_inicio_vigencia], map: "IX_DEST_UF_MUNICIPIO_ATU")
+}
+
+model dim_emitente {
+  id_emitente      Int                @id @default(autoincrement())
+  cnpj             String             @unique(map: "UX_EMITENTE_CNPJ") @db.Char(14)
+  razao_social     String             @db.VarChar(150)
+  ie               String?            @db.VarChar(20)
+  uf               String?            @db.Char(2)
+  municipio        String?            @db.VarChar(100)
+  ativo            Boolean            @default(true)
+  fato_nf          fato_nf[]
+  fato_processo_nf fato_processo_nf[]
+
+  @@index([uf, municipio], map: "IX_EMITENTE_UF_MUNICIPIO")
+}
+
+model dim_meio_pagamento {
+  id_meio_pagamento Int                @id @default(autoincrement())
+  codigo            String             @unique(map: "UX_PAGTO_COD") @db.VarChar(40)
+  descricao         String?            @db.VarChar(100)
+  fato_nf           fato_nf[]
+  fato_processo_nf  fato_processo_nf[]
+}
+
+model dim_status_nfe {
+  id_status_nfe Int       @id @default(autoincrement())
+  codigo        String    @unique(map: "UX_STATUS_NFE_COD") @db.VarChar(30)
+  descricao     String?   @db.VarChar(200)
+  fato_nf       fato_nf[]
+}
+
+model dim_status_processo {
+  id_status_processo Int                @id @default(autoincrement())
+  codigo             String             @unique(map: "UX_STATUS_PROC_COD") @db.VarChar(30)
+  descricao          String?            @db.VarChar(200)
+  fato_processo_nf   fato_processo_nf[]
+}
+
+model dim_tempo {
+  id_data          Int                @id
+  data             DateTime           @db.Date
+  ano              Int                @db.SmallInt
+  mes              Int                @db.TinyInt
+  dia              Int                @db.TinyInt
+  trimestre        Int                @db.TinyInt
+  dia_semana       Int                @db.TinyInt
+  fato_nf          fato_nf[]
+  fato_processo_nf fato_processo_nf[]
+}
+
+model evento_processo_nf {
+  id_evento         BigInt             @id @default(autoincrement())
+  id_processo       BigInt
+  id_origem_evento  Int
+  id_tipo_evento    Int
+  id_acao_processo  Int?
+  http_status       Int?
+  codigo_erro       String?            @db.VarChar(50)
+  mensagem_erro     String?            @db.VarChar(4000)
+  payload_json      Json?
+  dh_evento         DateTime           @default(dbgenerated("(utc_timestamp())")) @db.DateTime(0)
+  dim_acao_processo dim_acao_processo? @relation(fields: [id_acao_processo], references: [id_acao_processo], onDelete: NoAction, onUpdate: NoAction, map: "FK_EVT_ACAO")
+  dim_origem_evento dim_origem_evento  @relation(fields: [id_origem_evento], references: [id_origem_evento], onDelete: NoAction, onUpdate: NoAction, map: "FK_EVT_ORIGEM")
+  fato_processo_nf  fato_processo_nf   @relation(fields: [id_processo], references: [id_processo], onDelete: NoAction, onUpdate: NoAction, map: "FK_EVT_PROC")
+  dim_tipo_evento   dim_tipo_evento    @relation(fields: [id_tipo_evento], references: [id_tipo_evento], onDelete: NoAction, onUpdate: NoAction, map: "FK_EVT_TIPO")
+
+  @@index([id_processo, dh_evento], map: "IX_EVT_PROC_TIME")
+  @@index([id_acao_processo], map: "FK_EVT_ACAO")
+  @@index([id_tipo_evento], map: "FK_EVT_TIPO")
+  @@index([id_origem_evento, id_tipo_evento, dh_evento], map: "IX_EVT_ORIGEM_TIPO_TIME")
+}
+
+model fato_nf {
+  id_nf              BigInt                    @id @default(autoincrement())
+  id_enotas_nfe      String?                   @unique(map: "UX_NF_ENOTAS") @db.VarChar(64)
+  chave_acesso       String?                   @unique(map: "UX_NF_CHAVE") @db.VarChar(60)
+  numero             Int?
+  serie              Int?
+  modelo             String?                   @db.Char(2)
+  ambiente_emissao   fato_nf_ambiente_emissao?
+  id_data_emissao    Int
+  id_emitente        Int
+  id_destinatario    Int
+  id_meio_pagamento  Int?
+  id_status_nfe      Int
+  valor_total        Decimal                   @db.Decimal(18, 2)
+  descontos          Decimal?                  @db.Decimal(18, 2)
+  valor_impostos     Decimal?                  @db.Decimal(18, 2)
+  cfop_padrao        String?                   @db.VarChar(10)
+  ncm_padrao         String?                   @db.VarChar(8)
+  dh_insercao_dw     DateTime                  @default(dbgenerated("(utc_timestamp())")) @db.DateTime(0)
+  dim_destinatario   dim_destinatario          @relation(fields: [id_destinatario], references: [id_destinatario], onDelete: NoAction, onUpdate: NoAction, map: "FK_NF_DESTINATARIO")
+  dim_emitente       dim_emitente              @relation(fields: [id_emitente], references: [id_emitente], onDelete: NoAction, onUpdate: NoAction, map: "FK_NF_EMITENTE")
+  dim_meio_pagamento dim_meio_pagamento?       @relation(fields: [id_meio_pagamento], references: [id_meio_pagamento], onDelete: NoAction, onUpdate: NoAction, map: "FK_NF_MEIO_PAGTO")
+  dim_status_nfe     dim_status_nfe            @relation(fields: [id_status_nfe], references: [id_status_nfe], onDelete: NoAction, onUpdate: NoAction, map: "FK_NF_STATUS_NFE")
+  dim_tempo          dim_tempo                 @relation(fields: [id_data_emissao], references: [id_data], onDelete: NoAction, onUpdate: NoAction, map: "FK_NF_TEMPO")
+  fato_processo_nf   fato_processo_nf?
+  xref_cobranca_nf   xref_cobranca_nf[]
+
+  @@index([id_destinatario], map: "FK_NF_DESTINATARIO")
+  @@index([id_meio_pagamento], map: "FK_NF_MEIO_PAGTO")
+  @@index([id_status_nfe], map: "FK_NF_STATUS_NFE")
+  @@index([id_data_emissao], map: "IX_NF_DATA")
+  @@index([id_emitente, id_destinatario, id_status_nfe], map: "IX_NF_DIM")
+}
+
+model fato_processo_nf {
+  id_processo         BigInt                             @id @default(autoincrement())
+  id_requisicao       String                             @unique(map: "UQ_PROC_REQUISICAO") @db.VarChar(100)
+  id_emitente         Int
+  id_destinatario     Int
+  id_data_solicitacao Int
+  id_status_processo  Int
+  id_acao_processo    Int?
+  ambiente_emissao    fato_processo_nf_ambiente_emissao?
+  id_meio_pagamento   Int?
+  id_nf               BigInt?                            @unique(map: "UX_PROC_ID_NF")
+  valor_total_pedido  Decimal?                           @db.Decimal(18, 2)
+  resultado_final     String?                            @db.VarChar(20)
+  dh_atualizacao      DateTime                           @default(dbgenerated("(utc_timestamp())")) @db.DateTime(0)
+  evento_processo_nf  evento_processo_nf[]
+  dim_acao_processo   dim_acao_processo?                 @relation(fields: [id_acao_processo], references: [id_acao_processo], onDelete: NoAction, onUpdate: NoAction, map: "FK_PROC_ACAO")
+  dim_destinatario    dim_destinatario                   @relation(fields: [id_destinatario], references: [id_destinatario], onDelete: NoAction, onUpdate: NoAction, map: "FK_PROC_DESTINATARIO")
+  dim_meio_pagamento  dim_meio_pagamento?                @relation(fields: [id_meio_pagamento], references: [id_meio_pagamento], onDelete: NoAction, onUpdate: NoAction, map: "FK_PROC_DIM_MP")
+  dim_emitente        dim_emitente                       @relation(fields: [id_emitente], references: [id_emitente], onDelete: NoAction, onUpdate: NoAction, map: "FK_PROC_EMITENTE")
+  fato_nf             fato_nf?                           @relation(fields: [id_nf], references: [id_nf], onDelete: NoAction, onUpdate: NoAction, map: "FK_PROC_NF")
+  dim_status_processo dim_status_processo                @relation(fields: [id_status_processo], references: [id_status_processo], onDelete: NoAction, onUpdate: NoAction, map: "FK_PROC_STATUS")
+  dim_tempo           dim_tempo                          @relation(fields: [id_data_solicitacao], references: [id_data], onDelete: NoAction, onUpdate: NoAction, map: "FK_PROC_TEMPO")
+  xref_cobranca_nf    xref_cobranca_nf[]
+
+  @@index([id_destinatario], map: "FK_PROC_DESTINATARIO")
+  @@index([id_data_solicitacao], map: "FK_PROC_TEMPO")
+  @@index([id_emitente, id_destinatario], map: "IX_PROC_EMIT_DEST")
+  @@index([id_status_processo], map: "IX_PROC_STATUS")
+  @@index([id_meio_pagamento], map: "IX_PROC_MP")
+  @@index([id_acao_processo], map: "FK_PROC_ACAO")
+}
+
+model xref_cobranca_nf {
+  id_xref              BigInt           @id @default(autoincrement())
+  id_cobranca_monolito String           @db.VarChar(100)
+  id_processo          BigInt
+  id_nf                BigInt?
+  id_enotas_nfe        String?          @db.VarChar(64)
+  fato_nf              fato_nf?         @relation(fields: [id_nf], references: [id_nf], onDelete: NoAction, onUpdate: NoAction, map: "FK_XREF_NF")
+  fato_processo_nf     fato_processo_nf @relation(fields: [id_processo], references: [id_processo], onDelete: NoAction, onUpdate: NoAction, map: "FK_XREF_PROC")
+
+  @@unique([id_cobranca_monolito, id_processo], map: "UQ_XREF")
+  @@index([id_nf], map: "FK_XREF_NF")
+  @@index([id_processo], map: "FK_XREF_PROC")
+  @@index([id_cobranca_monolito], map: "IX_XREF_COB")
+}
+
+model dim_acao_processo {
+  id_acao_processo   Int                  @id @default(autoincrement())
+  codigo             String               @unique(map: "codigo") @db.VarChar(30)
+  descricao          String?              @db.VarChar(200)
+  evento_processo_nf evento_processo_nf[]
+  fato_processo_nf   fato_processo_nf[]
+}
+
+model dim_origem_evento {
+  id_origem_evento   Int                  @id @default(autoincrement())
+  codigo             String               @unique(map: "codigo") @db.VarChar(30)
+  descricao          String?              @db.VarChar(200)
+  evento_processo_nf evento_processo_nf[]
+}
+
+model dim_tipo_evento {
+  id_tipo_evento     Int                  @id @default(autoincrement())
+  codigo             String               @unique(map: "codigo") @db.VarChar(40)
+  descricao          String?              @db.VarChar(200)
+  evento_processo_nf evento_processo_nf[]
+}
+
+enum fato_processo_nf_ambiente_emissao {
+  Producao
+  Homologacao
+}
+
+enum fato_nf_ambiente_emissao {
+  Producao
+  Homologacao
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"PercentualAproximadoTributos.d.ts","sourceRoot":"","sources":["../../../src/models/nfe/PercentualAproximadoTributos.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,SAAS,EAAE,MAAM,aAAa,CAAC;AACxC,OAAO,EAAE,YAAY,EAAE,MAAM,gBAAgB,CAAC;AAE9C,MAAM,WAAW,4BAA4B;IACzC,YAAY,EAAE,YAAY,CAAC;IAC3B,SAAS,CAAC,EAAE,SAAS,CAAC;IACtB,KAAK,CAAC,EAAE,MAAM,CAAC;CAClB"}

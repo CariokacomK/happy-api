@@ -1,0 +1,1 @@
+{"version":3,"file":"NotaFiscalService.d.ts","sourceRoot":"","sources":["../../src/services/NotaFiscalService.ts"],"names":[],"mappings":"AAMA,OAAO,EAAE,aAAa,EAAE,MAAM,8BAA8B,CAAC;AAiB7D,cAAM,iBAAiB;IACf,UAAU,CAAC,SAAS,EAAE,MAAM,EAAE,MAAM,EAAE,MAAM,EAAE,QAAQ,EAAE,MAAM;IAM9D,UAAU,CAAC,GAAG,EAAE,aAAa;YAIrB,eAAe;YAiBf,uBAAuB;YAmBvB,uBAAuB;CAoBtC;;AAED,wBAAuC"}

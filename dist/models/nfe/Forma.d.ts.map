@@ -1,0 +1,1 @@
+{"version":3,"file":"Forma.d.ts","sourceRoot":"","sources":["../../../src/models/nfe/Forma.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,mBAAmB,EAAE,MAAM,uBAAuB,CAAC;AAE5D,MAAM,WAAW,KAAK;IAClB,IAAI,EAAE,MAAM,CAAC;IACb,KAAK,EAAE,MAAM,CAAC;IACd,mBAAmB,CAAC,EAAE,mBAAmB,CAAA;IACzC,SAAS,CAAC,EAAE,MAAM,GAAG,IAAI,CAAC;CAC7B"}
